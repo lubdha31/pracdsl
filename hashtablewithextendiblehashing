@@ -1,0 +1,92 @@
+class Bucket:
+    def __init__(self, depth, size):
+        self.depth = depth
+        self.size = size
+        self.items = {}
+
+    def is_full(self):
+        return len(self.items) >= self.size
+
+
+class ExtendibleHashTable:
+    def __init__(self, bucket_size=2):
+        self.global_depth = 1
+        self.bucket_size = bucket_size
+        self.directory = [Bucket(depth=1, size=bucket_size) for _ in range(2)]
+
+    def hash(self, key):
+        return hash(key) & ((1 << self.global_depth) - 1)
+
+    def double_directory(self):
+        self.directory += self.directory
+        self.global_depth += 1
+
+    def split_bucket(self, index):
+        bucket = self.directory[index]
+        local_depth = bucket.depth
+        new_bucket = Bucket(local_depth + 1, self.bucket_size)
+        bucket.depth += 1
+
+        pattern = 1 << local_depth
+        for i in range(len(self.directory)):
+            if self.directory[i] == bucket and (i & pattern):
+                self.directory[i] = new_bucket
+
+        old_items = list(bucket.items.items())
+        bucket.items.clear()
+        for k, v in old_items:
+            self.insert(k, v)
+
+    def insert(self, key, value):
+        index = self.hash(key)
+        bucket = self.directory[index]
+
+        if key in bucket.items:
+            bucket.items[key] = value
+            return
+
+        if not bucket.is_full():
+            bucket.items[key] = value
+        else:
+            if bucket.depth == self.global_depth:
+                self.double_directory()
+            self.split_bucket(index)
+            self.insert(key, value)
+
+    def search(self, key):
+        index = self.hash(key)
+        bucket = self.directory[index]
+        if key in bucket.items:
+            print(f"Found key {key} with value '{bucket.items[key]}' in bucket {index}")
+            return bucket.items[key]
+        print(f"Key {key} not found.")
+        return None
+
+    def delete(self, key):
+        index = self.hash(key)
+        bucket = self.directory[index]
+        if key in bucket.items:
+            del bucket.items[key]
+            print(f"Key {key} deleted from bucket {index}")
+        else:
+            print(f"Key {key} not found for deletion.")
+
+    def display(self):
+        print("\nDirectory:")
+        for i, bucket in enumerate(self.directory):
+            print(f"Index {i} | Depth {bucket.depth} | Items {bucket.items}")
+
+
+ht = ExtendibleHashTable(bucket_size=2)
+
+ht.insert(5, "A")
+ht.insert(15, "B")
+ht.insert(25, "C")
+ht.insert(35, "D")
+ht.insert(45, "E")
+
+ht.display()
+
+ht.search(25)
+ht.delete(15)
+ht.display()
