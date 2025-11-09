@@ -1,0 +1,45 @@
+from collections import deque
+
+locations = ['A', 'B', 'C', 'D', 'E']
+
+adj_matrix = [
+    [0, 1, 1, 0, 0],
+    [1, 0, 1, 1, 0],
+    [1, 1, 0, 0, 1],
+    [0, 1, 0, 0, 1],
+    [0, 0, 1, 1, 0]
+]
+
+adj_list = {
+    'A': ['B', 'C'],
+    'B': ['A', 'C', 'D'],
+    'C': ['A', 'B', 'E'],
+    'D': ['B', 'E'],
+    'E': ['C', 'D']
+}
+
+def bfs(start):
+    visited = []
+    queue = deque([start])
+    while queue:
+        node = queue.popleft()
+        if node not in visited:
+            visited.append(node)
+            for neighbor in adj_list[node]:
+                if neighbor not in visited:
+                    queue.append(neighbor)
+    return visited
+
+def dfs(start_index, visited):
+    visited[start_index] = True
+    print(locations[start_index], end=" ")
+    for i in range(len(adj_matrix[start_index])):
+        if adj_matrix[start_index][i] == 1 and not visited[i]:
+            dfs(i, visited)
+
+print("BFS Traversal starting from A:")
+print(" -> ".join(bfs('A')))
+
+print("\nDFS Traversal starting from A:")
+visited_nodes = [False] * len(locations)
+dfs(0, visited_nodes)
